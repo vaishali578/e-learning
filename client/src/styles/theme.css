@@ -1,0 +1,13 @@
+:root {
+  --bg: #ffffff;
+  --card: #f8f9fa;
+  --text: #111827;
+  --border: #e5e7eb;
+}
+
+.dark {
+  --bg: #26283e;
+  --card: #282b44;
+  --text: #e5e7eb;
+  --border: rgba(255,255,255,0.1);
+}

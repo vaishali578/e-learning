@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+
+    <!-- Viewport -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Primary SEO -->
+    <title>Learn Web Development Online | Interactive Coding Courses</title>
+    <meta 
+      name="description" 
+      content="Learn web development with interactive coding courses, real-world projects and expert guidance. Start your journey today."
+    />
+    <meta name="keywords" content="web development, coding courses, react course, javascript course, online learning" />
+    <meta name="author" content="Your Brand Name" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/favicon.png" />
+
+    <!-- Open Graph (For Social Media Sharing) -->
+    <meta property="og:title" content="Learn Web Development Online" />
+    <meta property="og:description" content="Interactive coding courses with real projects and expert mentors." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://yourwebsite.com/" />
+    <meta property="og:image" content="https://yourwebsite.com/preview.png" />
+
+    <!-- Google Fonts (Only keep what you actually use) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <!-- ⚠️ Keep only 1–2 fonts max for performance -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <!-- Theme Color -->
+    <meta name="theme-color" content="#ffffff" />
+  </head>
+
+  <body>
+    <div id="root"></div>
+
+    <!-- Apply initial theme before React loads to prevent flash -->
+    <script>
+      (function() {
+        const savedTheme = localStorage.getItem('theme');
+        const theme = savedTheme || 
+          (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+
+        if (theme === 'dark') {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      })();
+    </script>
+
+    <!-- Main React Entry -->
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

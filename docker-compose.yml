@@ -1,0 +1,42 @@
+version: "3.9"
+
+services:
+  backend:
+    build:
+      context: ./server  
+    container_name: mern-backend
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mongodb
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017/mern
+    networks:
+      - mern-network
+
+  frontend:
+    build:
+      context: ./client  
+    container_name: mern-frontend
+    ports:
+      - "80:80"
+    networks:
+      - mern-network
+
+  mongodb:
+    image: mongo:latest
+    container_name: mern-mongodb
+    ports:
+      - "27017:27017"
+    networks:
+      - mern-network
+    volumes:
+      - mongodb_data:/data/db  # Persist MongoDB data
+
+networks:
+  mern-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
+    driver: local
