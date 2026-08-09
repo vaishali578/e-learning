@@ -35,6 +35,16 @@ export const onFriendRequestSent = (cb) => {
   getSocket()?.on("friend_request_sent", cb);
 };
 
+// 🔹 Sender update (accepted/rejected) - when server notifies sender
+export const onFriendRequestUpdated = (cb) => {
+  getSocket()?.on("friend_request_updated", cb);
+};
+
+// 🔹 Errors
+export const onFriendRequestError = (cb) => {
+  getSocket()?.on("friend_request_error", cb);
+};
+
 // 🔹 Request accepted/rejected (both sides)
 export const onFriendRequestActionDone = (cb) => {
   getSocket()?.on("friend_request_action_done", cb);
@@ -82,6 +92,7 @@ export const removeAllListeners = () => {
   socket.off("sent_friend_requests");
   socket.off("friend_request_received");
   socket.off("friend_request_sent");
+  socket.off("friend_request_error");
   socket.off("friend_request_updated");
   socket.off("friend_request_action_done");
   socket.off("friend_request_accepted");

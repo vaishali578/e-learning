@@ -12,7 +12,8 @@ import {
 
 const ChatLayout = () => {
   const currentUser = JSON.parse(localStorage.getItem("user"));
-  const currentUserId = currentUser?.id;
+  // Bug 6 fix: stored user may use _id (Mongoose) or id (JWT payload)
+  const currentUserId = currentUser?.id || currentUser?._id;
 
   // 👉 REQUIRED STORES
   const [selectedFriend, setSelectedFriend] = useState(null);
@@ -47,25 +48,27 @@ const ChatLayout = () => {
     if (!socket) return;
 
     const handleReceiveMessage = (msg) => {
+      // Bug 5 fix: msg.conversation is an ObjectId; compare as strings
+      const isActive =
+        activeConversationId &&
+        msg.conversation?.toString() === activeConversationId.toString();
 
-  const isActive =
-    activeConversationId && msg.conversation === activeConversationId;
-
-  if (isActive) {
-    setMessages((prev) => [
-      ...prev,
-      {
-        _id: msg._id,
-        text: msg.text,
-        fromMe: msg.sender === currentUserId,
-        time: new Date(msg.createdAt).toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-      },
-    ]);
-  }
-};
+      if (isActive) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            _id: msg._id,
+            text: msg.text,
+            // Bug 5 fix: msg.sender is a populated object, not a plain string
+            fromMe: String(msg.sender?._id || msg.sender) === String(currentUserId),
+            time: new Date(msg.createdAt).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+          },
+        ]);
+      }
+    };
 
 
     socket.on("receive_message", handleReceiveMessage);

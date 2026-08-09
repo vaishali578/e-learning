@@ -8,6 +8,7 @@ import ContentModalWrapper from "../../../features/courses/modals/ContentModalWr
 import {
   getCourseById,
   publishCourse,
+  republishCourse,
 } from "../../../features/courses/services/courseService";
 
 import {
@@ -101,6 +102,9 @@ export default function CourseBuilderPage() {
         const updated = {
           ...prev,
           sections: [...prev.sections, newSection],
+          // If course is already published, mark it as needing republish
+          // so the Republish button becomes visible to the trainer
+          needsRepublish: prev.status === "published" ? true : prev.needsRepublish,
         };
 
         console.log("✅ Updated course AFTER adding section:", updated);
@@ -169,6 +173,9 @@ export default function CourseBuilderPage() {
       const updatedCourse = {
         ...prevCourse,
         sections: updatedSections,
+        // If course is already published, mark it as needing republish
+        // so the Republish button becomes visible and students can see the new content
+        needsRepublish: prevCourse.status === "published" ? true : prevCourse.needsRepublish,
       };
 
       console.log("✅ Course after adding content:", updatedCourse);
@@ -181,29 +188,47 @@ export default function CourseBuilderPage() {
   const handlePublish = async () => {
     if (!courseId) return;
 
+    const needsRepublish = course?.status === "published" && course?.needsRepublish;
+
     try {
       setSaving(true);
 
-      console.log("🚀 Publishing course:", courseId);
+      console.log(
+        needsRepublish ? "🔄 Republishing course:" : "🚀 Publishing course:",
+        courseId,
+      );
 
-      const res = await publishCourse(courseId);
+      const res = needsRepublish
+        ? await republishCourse(courseId)
+        : await publishCourse(courseId);
 
       console.log("📦 Publish response:", res);
 
       setCourse((prev) => {
+        if (!prev) return prev;
+
         const updated = {
           ...prev,
           status: "published",
+          needsRepublish: false,
         };
 
-        console.log("✅ Status AFTER publish (frontend):", updated.status);
+        console.log(
+          needsRepublish
+            ? "✅ Status AFTER republish (frontend):"
+            : "✅ Status AFTER publish (frontend):",
+          updated.status,
+        );
         return updated;
       });
 
       navigate("/trainer/my-courses");
     } catch (error) {
-      console.error("❌ Publish error:", error);
-      toast.error("Publish failed");
+      console.error(
+        needsRepublish ? "❌ Republish error:" : "❌ Publish error:",
+        error,
+      );
+      toast.error(needsRepublish ? "Republish failed" : "Publish failed");
     } finally {
       setSaving(false);
     }

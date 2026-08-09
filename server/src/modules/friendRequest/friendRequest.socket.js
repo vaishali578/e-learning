@@ -35,16 +35,18 @@ const registerFriendRequestSocket = async (socket, io, onlineUsers) => {
     try {
       const request = await sendFriendRequestService(userId, receiverId);
 
-      // 🔹 Notify receiver
+      // 🔹 Notify receiver — populate sender so receiver sees name/avatar
       const receiverSocketId = onlineUsers.get(receiverId);
       if (receiverSocketId) {
-        io.to(receiverSocketId).emit("friend_request_received", request);
+        const populated = await request.populate("sender", "name email avatar");
+        io.to(receiverSocketId).emit("friend_request_received", populated);
       }
 
       // 🔹 Notify sender
       socket.emit("friend_request_sent", request);
     } catch (err) {
-      socket.emit("friend_request_error", err.message);
+      // include receiverId so frontend can revert any transient UI state
+      socket.emit("friend_request_error", { message: err.message, receiverId });
     }
   });
 
@@ -64,30 +66,27 @@ const registerFriendRequestSocket = async (socket, io, onlineUsers) => {
       // 🔹 Notify receiver (current user)
       socket.emit("friend_request_action_done", updated);
 
-      // 🔹 NEW: if accepted, notify both users to enable "Send Message" button
+      // 🔹 If accepted, notify both users so they can enable "Send Message"
       if (status === "accepted") {
         const senderSocket = onlineUsers.get(updated.sender.toString());
         const receiverSocket = onlineUsers.get(updated.receiver.toString());
 
-        const payload = {
-          friendId: updated.sender.toString(), // for receiver
-          friendName: updated.senderName, // optional: send name/email
-        };
+        // Notify receiver: their new friend is the original sender
+        if (receiverSocket) {
+          io.to(receiverSocket).emit("friend_request_accepted", {
+            friendId: updated.sender.toString(),
+          });
+        }
 
-        // Notify receiver
-        if (receiverSocket)
-          io.to(receiverSocket).emit("friend_request_accepted", payload);
-
-        // Notify sender
-        const senderPayload = {
-          friendId: updated.receiver.toString(), // for sender
-          friendName: updated.receiverName, // optional
-        };
-        if (senderSocket)
-          io.to(senderSocket).emit("friend_request_accepted", senderPayload);
+        // Notify sender: their new friend is the original receiver
+        if (senderSocket) {
+          io.to(senderSocket).emit("friend_request_accepted", {
+            friendId: updated.receiver.toString(),
+          });
+        }
       }
     } catch (err) {
-      socket.emit("friend_request_error", err.message);
+      socket.emit("friend_request_error", { message: err.message, requestId });
     }
   });
 };

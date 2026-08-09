@@ -6,6 +6,8 @@ import { getUserAvatar } from "@/utils/getUserAvatar";
 import {
   onFriendRequestReceived,
   onFriendRequestSent,
+  onFriendRequestError,
+  onFriendRequestUpdated,
   onFriendRequestActionDone,
   removeAllListeners,
 } from "@/socket/socketListeners";
@@ -16,6 +18,7 @@ const FindPeoplePage = () => {
   const [allUsers, setAllUsers] = useState([]);
   const [incomingRequests, setIncomingRequests] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [sendingIds, setSendingIds] = useState([]);
 
   /* ===============================
      INITIAL DATA (API = SOURCE OF TRUTH)
@@ -40,8 +43,8 @@ const FindPeoplePage = () => {
 
       const { friends, sentRequests, receivedRequests } = await syncFriends();
 
-      const friendIds = friends.map((f) => f._id);
-      const sentIds = sentRequests.map((r) => r.receiver._id);
+      const friendIds = friends.map((f) => f._id.toString());
+      const sentIds = sentRequests.map((r) => r.receiver._id.toString());
 
       setIncomingRequests(receivedRequests);
 
@@ -49,9 +52,9 @@ const FindPeoplePage = () => {
         users.map((user) => {
           let requestStatus = null;
 
-          if (friendIds.includes(user._id)) {
+          if (friendIds.includes(user._id.toString())) {
             requestStatus = "accepted";
-          } else if (sentIds.includes(user._id)) {
+          } else if (sentIds.includes(user._id.toString())) {
             requestStatus = "pending";
           }
 
@@ -77,47 +80,92 @@ const FindPeoplePage = () => {
      SOCKET = REALTIME ONLY
   =============================== */
   useEffect(() => {
-    const socket = getSocket();
-    if (!socket) return;
+    let poll;
 
-    /* ----- someone sent you request ----- */
-    onFriendRequestReceived((request) => {
-      setIncomingRequests((prev) => [request, ...prev]);
+    const setupListeners = () => {
+      const socket = getSocket();
+      if (!socket) return false;
 
-      setAllUsers((prev) =>
-        prev.map((u) =>
-          u._id === request.sender ? { ...u, requestStatus: "pending" } : u,
-        ),
-      );
-    });
+      /* ----- someone sent you request ----- */
+      onFriendRequestReceived((request) => {
+        setIncomingRequests((prev) => [request, ...prev]);
 
-    /* ----- confirmation to sender ----- */
-    onFriendRequestSent((request) => {
-      setAllUsers((prev) =>
-        prev.map((u) =>
-          u._id === request.receiver ? { ...u, requestStatus: "pending" } : u,
-        ),
-      );
-    });
-
-    /* ----- accept / reject done ----- */
-    onFriendRequestActionDone((updatedRequest) => {
-      setIncomingRequests((prev) =>
-        prev.filter((r) => r._id !== updatedRequest._id),
-      );
-
-      if (updatedRequest.status === "accepted") {
         setAllUsers((prev) =>
           prev.map((u) =>
-            u._id === updatedRequest.sender
-              ? { ...u, requestStatus: "accepted" }
-              : u,
+            u._id === request.sender ? { ...u, requestStatus: "pending" } : u,
           ),
         );
-      }
-    });
+      });
+
+      /* ----- confirmation to sender ----- */
+      onFriendRequestSent((request) => {
+        const rid = request.receiver?._id || request.receiver;
+        setSendingIds((prev) => prev.filter((id) => id !== rid));
+        setAllUsers((prev) =>
+          prev.map((u) =>
+            u._id === rid ? { ...u, requestStatus: "pending" } : u,
+          ),
+        );
+      });
+
+      /* ----- updated (sender notified of accept/reject) ----- */
+      onFriendRequestUpdated((updated) => {
+        // updated.sender = original sender id, updated.receiver = original receiver id
+        if (updated.status === "accepted") {
+          const rid = updated.receiver?._id || updated.receiver;
+          setAllUsers((prev) =>
+            prev.map((u) => (u._id === rid ? { ...u, requestStatus: "accepted" } : u)),
+          );
+        } else if (updated.status === "rejected") {
+          const rid = updated.receiver?._id || updated.receiver;
+          setAllUsers((prev) => prev.map((u) => (u._id === rid ? { ...u, requestStatus: null } : u)));
+        }
+      });
+
+      /* ----- send error ----- */
+      onFriendRequestError((err) => {
+        const receiverId = err?.receiverId || err?.requestId || null;
+        if (receiverId) {
+          setSendingIds((prev) => prev.filter((id) => id !== receiverId));
+        } else {
+          setSendingIds([]);
+        }
+        console.error("Friend request failed:", err?.message || err);
+      });
+
+      /* ----- accept / reject done ----- */
+      onFriendRequestActionDone((updatedRequest) => {
+        setIncomingRequests((prev) =>
+          prev.filter((r) => r._id !== updatedRequest._id),
+        );
+
+        if (updatedRequest.status === "accepted") {
+          setAllUsers((prev) =>
+            prev.map((u) =>
+              u._id.toString() === updatedRequest.sender?.toString()
+                ? { ...u, requestStatus: "accepted" }
+                : u,
+            ),
+          );
+        }
+      });
+
+      return true;
+    };
+
+    if (!setupListeners()) {
+      // poll for socket up to ~10 times
+      let attempts = 0;
+      poll = setInterval(() => {
+        attempts += 1;
+        if (setupListeners() || attempts > 10) {
+          clearInterval(poll);
+        }
+      }, 500);
+    }
 
     return () => {
+      clearInterval(poll);
       removeAllListeners();
     };
   }, []);
@@ -126,14 +174,16 @@ const FindPeoplePage = () => {
      ACTIONS
   =============================== */
   const handleSendRequest = (user) => {
-    getSocket()?.emit("send_friend_request", { receiverId: user._id });
+    // mark as sending to disable button until server confirms
+    setSendingIds((prev) => [...prev, user._id]);
+    const socket = getSocket();
+    if (!socket) {
+      setSendingIds((prev) => prev.filter((id) => id !== user._id));
+      console.error("Socket not connected - cannot send friend request");
+      return;
+    }
 
-    // optimistic UI
-    setAllUsers((prev) =>
-      prev.map((u) =>
-        u._id === user._id ? { ...u, requestStatus: "pending" } : u,
-      ),
-    );
+    socket.emit("send_friend_request", { receiverId: user._id });
   };
 
   const handleAccept = (request) => {
@@ -190,7 +240,7 @@ const FindPeoplePage = () => {
                       handleSendRequest(user);
                     }
                   }}
-                  disabled={user.requestStatus === "pending"}
+                  disabled={user.requestStatus === "pending" || sendingIds.includes(user._id)}
                   className={`px-4 py-2 rounded-lg text-sm transition ${
                     user.requestStatus === "pending"
                       ? "bg-gray-300 text-gray-600 cursor-not-allowed"

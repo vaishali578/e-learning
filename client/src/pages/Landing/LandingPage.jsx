@@ -15,7 +15,7 @@ const LandingPage = () => {
       <header className="border-b dark:border-[#1E2B4A]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <h1 className="text-lg font-bold text-gray-900 dark:text-white">
-            Globus-E-Learning
+            E-Learning
           </h1>
 
           <div className="flex items-center gap-3">

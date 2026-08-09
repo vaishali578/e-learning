@@ -64,3 +64,39 @@ router.post("/create-intent", protect, createPaymentIntent);
 router.post("/confirm", protect, confirmPayment);
 
 export default router;
+
+
+
+// Student clicks "Buy Course"
+//         ↓
+// Frontend sends studentId + courseId + amount
+//         ↓
+// Backend createPaymentIntentService()
+//         ↓
+// Check: Pending payment already exists?
+//         ↓
+//        Yes ───────────────→ Return existing clientSecret
+//         │
+//        No
+//         ↓
+// Create Stripe PaymentIntent
+//         ↓
+// Stripe gives paymentIntent.id + client_secret
+//         ↓
+// Save Payment in MongoDB as "pending"
+//         ↓
+// Send clientSecret to Frontend
+//         ↓
+// Stripe Checkout/Payment UI
+//         ↓
+// Student completes payment
+//         ↓
+// Stripe processes payment
+//         ↓
+// Stripe Webhook → Backend
+//         ↓
+// updatePaymentStatusService()
+//         ↓
+// Payment = success
+//         ↓
+// Create Enrollment

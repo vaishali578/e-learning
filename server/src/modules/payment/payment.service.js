@@ -33,7 +33,7 @@ export const createPaymentIntentService = async ({ studentId, courseId, amount }
   // ✅ Create Stripe Intent
   const paymentIntent = await stripe.paymentIntents.create({
     amount: amount * 100,
-    currency: "inr",
+    currency: "usd",
     metadata: { studentId, courseId },
   });
 
@@ -44,6 +44,7 @@ export const createPaymentIntentService = async ({ studentId, courseId, amount }
     paymentIntentId: paymentIntent.id,
     clientSecret: paymentIntent.client_secret,
     amount,
+    currency: "USD",
     status: "pending",
   });
 
@@ -75,22 +76,7 @@ export const updatePaymentStatusService = async (paymentIntentId, status) => {
   payment.status = status;
   await payment.save();
 
-  // ✅ Only create enrollment if payment succeeded
-  if (status === "success") {
-    // Check if enrollment already exists to avoid duplicates
-    const existingEnrollment = await Enrollment.findOne({
-      student: payment.student,
-      course: payment.course,
-    });
 
-    if (!existingEnrollment) {
-      await Enrollment.create({
-        student: payment.student,
-        course: payment.course,
-        payment: payment._id,
-      });
-    }
-  }
 
   return payment;
 };

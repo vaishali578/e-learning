@@ -6,6 +6,7 @@ import AuthForm from "../../features/auth/components/AuthForm";
 import SocialLogin from "../../features/auth/components/SocialLogin";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { loginApi } from "../../features/auth/authApi";
+import toast from "react-hot-toast";
 
 import logo from "../../assets/images/auth/logo.jpg";
 
@@ -20,7 +21,6 @@ const Login = () => {
   });
 
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
 
   /* ---------------- Handlers ---------------- */
 
@@ -33,7 +33,6 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
     setLoading(true);
 
     try {
@@ -53,7 +52,7 @@ const Login = () => {
         navigate("/");
       }
     } catch (err) {
-      setError(err.response?.data?.message || "Login failed");
+      toast.error("Invalid username or password")
     } finally {
       setLoading(false);
     }
@@ -66,15 +65,11 @@ const Login = () => {
       heading="Welcome Back!"
       subheading="Manage your learning journey seamlessly. Access courses, track progress, and stay connected."
     >
-      {/* Logo */}
-      <div className="flex justify-center items-center gap-3 mb-4">
-        <img src={logo} alt="Logo" className="h-6" />
-        <span className="text-lg font-semibold text-[#d6d7e0]">Globussoft</span>
-      </div>
+      
 
       <div className="flex mb-4 justify-center flex-col text-center">
         <h3 className="font-bold mb-2 text-md text-white">
-          Welcome to Globus-E-Learning
+          Welcome to E-Learning
         </h3>
         <p className="text-sm">Sign in to access your secure dashboard.</p>
       </div>
@@ -109,7 +104,6 @@ const Login = () => {
             onChange={handleChange}
             onSubmit={handleSubmit}
             loading={loading}
-            error={error}
           />
         </TabsContent>
 
@@ -122,7 +116,6 @@ const Login = () => {
             onChange={handleChange}
             onSubmit={handleSubmit}
             loading={loading}
-            error={error}
           />
         </TabsContent>
       </Tabs>

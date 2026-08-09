@@ -307,7 +307,7 @@ const StudentDashboard = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Welcome to Globus Learning! 🎓
+            Welcome to E Learning! 🎓
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             {new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" })}

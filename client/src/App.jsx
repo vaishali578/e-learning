@@ -1,6 +1,7 @@
 import React, { Suspense, lazy } from "react";
 import { Routes, Route } from "react-router-dom";
 import SocketProvider from "@/context/SocketProvider";
+import { Toaster } from "react-hot-toast";
 
 // Lazy imports
 const StudentRoutes = lazy(() => import("./routes/StudentRoutes"));
@@ -13,6 +14,7 @@ function App() {
 
   return (
     <SocketProvider token={token}>
+      <Toaster />
       <Suspense fallback={<div>Loading...</div>}>
         <Routes>
           {/* Landing */}

@@ -3,7 +3,7 @@ import {
   onFriendRequestReceived,
   onFriendRequestUpdated,
   onFriendRequestActionDone,
-} from "@/socket/socket.listeners";
+} from "@/socket/socketListeners";
 
 export const useFriendRequestSocket = ({
   onReceive,

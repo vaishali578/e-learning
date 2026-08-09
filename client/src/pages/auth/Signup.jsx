@@ -66,16 +66,11 @@ const Signup = () => {
       heading="Join Us Today!"
       subheading="Create your account and start your learning journey with Globus E-Learning."
     >
-      {/* Logo */}
-      <div className="flex justify-center items-center gap-3 mb-4">
-        <img src={logo} alt="Logo" className="h-6" />
-        <span className="text-lg font-semibold text-[#d6d7e0]">Globussoft</span>
-      </div>
 
       {/* Heading */}
       <div className="flex mb-4 justify-center flex-col text-center">
         <h3 className="font-bold mb-2 text-md text-white">
-          Create your Globus-E-Learning account
+          Create your E-Learning account
         </h3>
         <p className="text-sm">Sign up to explore courses and start learning</p>
       </div>

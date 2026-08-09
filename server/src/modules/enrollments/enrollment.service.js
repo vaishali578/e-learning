@@ -6,7 +6,7 @@ import mongoose from "mongoose";
 /**
  * Create enrollment (free OR paid – skip actual payment)
  */
-export const enrollCourseService = async ({ studentId, courseId }) => {
+export const enrollCourseService = async ({ studentId, courseId, paymentId }) => {
   if (!mongoose.Types.ObjectId.isValid(courseId)) {
     throw new AppError("Invalid course id", 400);
   }
@@ -38,6 +38,7 @@ export const enrollCourseService = async ({ studentId, courseId }) => {
   const enrollment = await Enrollment.create({
     student: studentId,
     course: courseId,
+    payment: paymentId,
     status: "active",
     progressPercentage: 0,
   });
