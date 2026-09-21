@@ -13,6 +13,7 @@ import friendRequestRoutes from "../modules/friendRequest/friendRequest.routes.j
 import chatRoutes from "../modules/chat/chat.routes.js"
 import courseProgressRoutes from "../modules/courseProgress/courseProgress.routes.js"
 import scheduleRoutes from "../modules/schedule/schedule.routes.js"
+import aiRoutes from "./ai.routes.js"
 
 // Function to load routes
 const loadRoutes = (app) => {
@@ -56,6 +57,8 @@ const loadRoutes = (app) => {
   app.use("/api/schedules", scheduleRoutes);
 
   app.use("/api/uploads", uploadRoutes);
+
+  app.use("/api/ai", aiRoutes);
 };
 
 export default loadRoutes;
